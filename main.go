@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -26,7 +27,7 @@ import (
 
 var (
 	Listen   = ":8080"
-	RepoPath = "./ipfs"
+	RepoPath = "./data"
 	Peers    = []string{"12D3KooWH1d6Zi8WeYbpqaP4MKv23VY6XPXMM4AoSBZq5kv6s4ey", "12D3KooWDm2o3RZsE7t2oFMqKZxYo4W1c2XwYrKbXm3qXUeVLpnp"}
 )
 
@@ -43,21 +44,27 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println("inited")
+
+	var l net.Listener
 	list, err := activation.Listeners()
 	if err != nil {
 		log.Fatal(err)
 	}
+	if len(list) > 0 {
+		l = list[0]
+	} else {
+		l, err = net.Listen("tcp", Listen)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	var opts []corehttp.ServeOption
 	opts = append(opts, corehttp.GatewayOption(false, "/ipfs", "/ipns"))
-	if len(list) > 0 {
-		err = corehttp.Serve(node, list[0], opts...)
-	} else {
-		err = corehttp.ListenAndServe(node, "/ip4/127.0.0.1/tcp/8080", opts...)
-	}
+	err = corehttp.Serve(node, l, opts...)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("exit")
+	log.Println("exiting")
 	time.Sleep(time.Second)
 }
 

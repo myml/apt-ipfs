@@ -1,5 +1,6 @@
 .git
 Dockerfile
 ipfs
+data
 apt-ipfs
 .vscode
