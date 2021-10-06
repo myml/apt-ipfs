@@ -25,7 +25,7 @@ import (
 
 var (
 	RepoPath = "./ipfs"
-	Peers    = []string{"12D3KooWDXYbW14kKdXFE8ASuY5dBf9EPVk9wd1LtouL6HTpwYZv", "12D3KooWDm2o3RZsE7t2oFMqKZxYo4W1c2XwYrKbXm3qXUeVLpnp"}
+	Peers    = []string{"12D3KooWH1d6Zi8WeYbpqaP4MKv23VY6XPXMM4AoSBZq5kv6s4ey", "12D3KooWDm2o3RZsE7t2oFMqKZxYo4W1c2XwYrKbXm3qXUeVLpnp"}
 )
 
 func main() {
@@ -94,7 +94,6 @@ func initNode(ctx context.Context) (*core.IpfsNode, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open repo: %w", err)
 	}
-
 	nodeOptions := &core.BuildCfg{
 		Online:  true,
 		Routing: libp2p.DHTClientOption,
