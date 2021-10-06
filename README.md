@@ -20,11 +20,19 @@ deepin仓库CID，由于ipfs是基于资源哈希值寻址，仓库的任何变�
 ## 使用
 
 ### 安装
-`go install github.com/myml/apt-ipfs`
-### 启动
-`~/go/bin/apt-ipfs`
-### 改源
+以下方式二选一
+- Docker安装
+```sh
+docker run --network host myml/apt-ipfs /apt-ipfs -l 127.0.0.1:8080
+# 因为p2p需要节点互连，建议使用主机网络而不是发布端口
 ```
+- 源码编译
+```sh
+go install github.com/myml/apt-ipfs@latest
+~/go/bin/apt-ipfs
+```
+### 改源
+```sh
 deb http://127.0.0.1:8080/ipns/mirrors.myml.dev/deepin/ apricot main contrib non-free
 deb-src http://127.0.0.1:8080/ipns/mirrors.myml.dev/deepin/ apricot main contrib non-free
 ```

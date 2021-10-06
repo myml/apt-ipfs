@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -24,11 +25,16 @@ import (
 )
 
 var (
+	Listen   = ":8080"
 	RepoPath = "./ipfs"
 	Peers    = []string{"12D3KooWH1d6Zi8WeYbpqaP4MKv23VY6XPXMM4AoSBZq5kv6s4ey", "12D3KooWDm2o3RZsE7t2oFMqKZxYo4W1c2XwYrKbXm3qXUeVLpnp"}
 )
 
 func main() {
+	flag.StringVar(&RepoPath, "p", RepoPath, "ipfs repo path")
+	flag.StringVar(&Listen, "l", Listen, "listen address")
+	flag.Parse()
+
 	ctx := context.Background()
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
