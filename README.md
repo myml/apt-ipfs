@@ -4,7 +4,7 @@
 ipfs是一个分布式文件系统，底层提供p2p共享能力，类似平常使用的bt下载工具提供p2p，只不过ipfs下载资源不需要提供资源种子，而是需要资源的哈希值。
 
 ## 说明
-我已经将deepin仓库发布到自己搭建的ipfs节点中进行“做种”，**由于资源刚发布，我自己的ipfs节点资源有限，仓库源访问会比较慢。**
+我已经将deepin仓库发布到自己搭建的ipfs节点中进行“做种”，**由于仓库刚发布，ipfs节点资源有限，下载会比较慢，使用的人多了就速度就快了。**
 
 我的ipfs节点ID*已内置配置到工具中*
 
@@ -24,7 +24,7 @@ deepin仓库CID，由于ipfs是基于资源哈希值寻址，仓库的任何变�
 - Docker安装
 ```sh
 # 因为p2p需要节点互连，建议使用主机网络而不是发布端口
-docker run --name apt-ipfs --network host --restart always -v apt-ipfs-data:/data ghcr.io/myml/apt-ipfs:main /apt-ipfs -l 127.0.0.1:8080
+docker run -d --name apt-ipfs --network host --restart always -v apt-ipfs-data:/data ghcr.io/myml/apt-ipfs:main /apt-ipfs -l 127.0.0.1:8080
 ```
 - 源码编译
 ```sh
