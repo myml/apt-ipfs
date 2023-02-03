@@ -13,22 +13,26 @@ import (
 	"syscall"
 	"time"
 
-	config "github.com/ipfs/go-ipfs-config"
-	"github.com/ipfs/go-ipfs/core"
-	"github.com/ipfs/go-ipfs/core/coreapi"
-	"github.com/ipfs/go-ipfs/core/corehttp"
-	"github.com/ipfs/go-ipfs/repo/fsrepo"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/ipfs/kubo/config"
+	"github.com/ipfs/kubo/core"
+	"github.com/ipfs/kubo/core/coreapi"
+	"github.com/ipfs/kubo/core/corehttp"
+	"github.com/ipfs/kubo/repo/fsrepo"
 
-	"github.com/ipfs/go-ipfs/plugin/loader"
+	"github.com/ipfs/kubo/plugin/loader"
 
 	"github.com/coreos/go-systemd/v22/activation"
 )
 
 var (
-	Listen   = ":8080"
-	RepoPath = "./data"
-	Peers    = []string{"12D3KooWH1d6Zi8WeYbpqaP4MKv23VY6XPXMM4AoSBZq5kv6s4ey"}
+	Listen    = ":8080"
+	RepoPath  = "./data"
+	Bootstrap = []string{
+		"/dns4/bootstrap.getdeepin.org/tcp/4001/p2p/12D3KooWAWWJgfr6LxTUi3EiPA5kySbznbQvjTyVRX4SBa4uPmpb",
+		"/dns6/bootstrap.getdeepin.org/tcp/4001/p2p/12D3KooWAWWJgfr6LxTUi3EiPA5kySbznbQvjTyVRX4SBa4uPmpb",
+		"/dns4/mirrors.getdeepin.com/tcp/8443/wss/p2p/12D3KooWCMcqaZQyBtRDRdVm3UsipwjG5nKR2TSk96CqRb7rNxtq",
+	}
+	SwarmKey = "/key/swarm/psk/1.0.0/\n/base16/\n2508242b6ac9e665ea98eb134dd7e05497530f36876ae3ebc865f45fb104291b"
 )
 
 func main() {
@@ -98,11 +102,12 @@ func initNode(ctx context.Context) (*core.IpfsNode, error) {
 	if err != nil {
 		return nil, fmt.Errorf("core api:%w", err)
 	}
-	p, err := core.Name().Resolve(ctx, "/ipns/mirrors.myml.dev/deepin")
-	if err != nil {
-		return nil, fmt.Errorf("resolve path: %w", err)
-	}
-	log.Println("resolve /ipns/mirrors.myml.dev/deepin", "=>", p.String())
+	_ = core
+	// p, err := core.Name().Resolve(ctx, "/ipns/mirrors.myml.dev/deepin")
+	// if err != nil {
+	// 	return nil, fmt.Errorf("resolve path: %w", err)
+	// }
+	// log.Println("resolve /ipns/mirrors.myml.dev/deepin", "=>", p.String())
 	return node, nil
 }
 
@@ -111,23 +116,14 @@ func initConfig() (*config.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	// 降低CPU占用
-	cfg.Discovery.MDNS.Enabled = false
-	cfg.Swarm.DisableBandwidthMetrics = true
-	cfg.Swarm.ConnMgr.HighWater = 50
-	cfg.Swarm.EnableAutoRelay = true
-	cfg.Routing.Type = "dhtclient"
-	// 添加默认节点
-	for i := range Peers {
-		id, err := peer.Decode(Peers[i])
-		if err != nil {
-			return nil, err
-		}
-		cfg.Peering.Peers = append(cfg.Peering.Peers, peer.AddrInfo{ID: id})
-	}
+	cfg.Bootstrap = Bootstrap
 	err = fsrepo.Init(RepoPath, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("init config: %w", err)
+	}
+	err = os.WriteFile(filepath.Join(RepoPath, "swarm.key"), []byte(SwarmKey), 0644)
+	if err != nil {
+		return nil, fmt.Errorf("init swarm key: %w", err)
 	}
 	return cfg, err
 }
