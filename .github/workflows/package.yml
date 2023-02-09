@@ -1,0 +1,30 @@
+name: Package
+
+on:
+  push:
+    branches:
+      - main
+    tags: ["v*.*.*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          cache: true
+      - name: Install
+        run: |
+          sudo apt-get -y install upx-ucl
+          go install github.com/goreleaser/nfpm/cmd/nfpm@latest
+      - name: Build
+        run: |
+          go build -ldflags="-s -w"
+          upx apt-ipfs
+          /home/runner/go/bin/nfpm package --packager deb
+      - uses: actions/upload-artifact@v3
+        with:
+          name: apt-ipfs.deb
+          path: "*.deb"
