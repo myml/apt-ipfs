@@ -18,25 +18,27 @@ deepin 仓库 CID，由于 ipfs 是基于资源内容哈希值寻址，仓库的
 - dnslink: /ipns/mirrors.getdeepin.org/deepin
 - 2023-12-19 版本仓库：/ipfs/QmbJCS5f269VDzZLkxVoeQX9FmwhUYYYLnK1ryctfqjRBm/deepin
 
-## 使用
+## 安装
 
-### 安装
+### 使用 DEB 包安装
 
-以下方式二选一
+到 [Release](https://github.com/myml/apt-ipfs/releases) 页面下载 deb 包安装使用
 
-- Docker 安装
+### 使用 Docker 安装
+
+因为p2p需要节点互连，建议使用主机网络而不是发布端口
 
 ```sh
-# 因为p2p需要节点互连，建议使用主机网络而不是发布端口
 docker run -d --name apt-ipfs --network host --restart always -v apt-ipfs-data:/data ghcr.io/myml/apt-ipfs:main /apt-ipfs -l 127.0.0.1:8080
 ```
 
-- 源码编译
+### 从源码安装
 
 ```sh
 go install github.com/myml/apt-ipfs@latest
-~/go/bin/apt-ipfs
 ```
+
+## 使用
 
 ### 改源
 
