@@ -27,12 +27,13 @@ import (
 var (
 	Listen    = ":8080"
 	RepoPath  = "./data"
+	SwarmKey  = "/key/swarm/psk/1.0.0/\n/base16/\n2508242b6ac9e665ea98eb134dd7e05497530f36876ae3ebc865f45fb104291b"
 	Bootstrap = []string{
-		"/dns4/bootstrap.getdeepin.org/tcp/4001/p2p/12D3KooWAWWJgfr6LxTUi3EiPA5kySbznbQvjTyVRX4SBa4uPmpb",
-		"/dns6/bootstrap.getdeepin.org/tcp/4001/p2p/12D3KooWAWWJgfr6LxTUi3EiPA5kySbznbQvjTyVRX4SBa4uPmpb",
-		"/dns4/mirrors.getdeepin.com/tcp/8443/wss/p2p/12D3KooWCMcqaZQyBtRDRdVm3UsipwjG5nKR2TSk96CqRb7rNxtq",
+		"/dns4/bootstrap.getdeepin.org/tcp/4001/p2p/12D3KooWBc44S9zeb1KSdRZMCHTNpuNX3uS8SpvpbQz2SzrNsWJm",
+		"/dns6/bootstrap.getdeepin.org/tcp/4001/p2p/12D3KooWBc44S9zeb1KSdRZMCHTNpuNX3uS8SpvpbQz2SzrNsWJm",
+		"/dns4/mirrors.getdeepin.org/tcp/8443/wss/p2p/12D3KooWCMcqaZQyBtRDRdVm3UsipwjG5nKR2TSk96CqRb7rNxtq",
+		"/dns6/mirrors.getdeepin.org/tcp/8443/wss/p2p/12D3KooWCMcqaZQyBtRDRdVm3UsipwjG5nKR2TSk96CqRb7rNxtq",
 	}
-	SwarmKey = "/key/swarm/psk/1.0.0/\n/base16/\n2508242b6ac9e665ea98eb134dd7e05497530f36876ae3ebc865f45fb104291b"
 )
 
 func main() {
@@ -61,9 +62,11 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Println("listen: ", Listen)
 	}
-	var opts []corehttp.ServeOption
-	opts = append(opts, corehttp.GatewayOption(false, "/ipfs", "/ipns"))
+	opts := []corehttp.ServeOption{
+		corehttp.GatewayOption(false, "/ipfs", "/ipns"),
+	}
 	err = corehttp.Serve(node, l, opts...)
 	if err != nil {
 		log.Fatal(err)
@@ -72,6 +75,7 @@ func main() {
 	time.Sleep(time.Second)
 }
 
+// 初始化节点
 func initNode(ctx context.Context) (*core.IpfsNode, error) {
 	plugins, err := loader.NewPluginLoader(filepath.Join(RepoPath, "plugins"))
 	if err != nil {
@@ -102,15 +106,17 @@ func initNode(ctx context.Context) (*core.IpfsNode, error) {
 	if err != nil {
 		return nil, fmt.Errorf("core api:%w", err)
 	}
-	_ = core
-	// p, err := core.Name().Resolve(ctx, "/ipns/mirrors.myml.dev/deepin")
-	// if err != nil {
-	// 	return nil, fmt.Errorf("resolve path: %w", err)
-	// }
-	// log.Println("resolve /ipns/mirrors.myml.dev/deepin", "=>", p.String())
+
+	mirrors := "/ipns/mirrors.getdeepin.org"
+	p, err := core.Name().Resolve(ctx, mirrors)
+	if err != nil {
+		return nil, fmt.Errorf("resolve path: %w", err)
+	}
+	log.Printf("resolve %s => %s\n", mirrors, p.String())
 	return node, nil
 }
 
+// 生成配置
 func initConfig() (*config.Config, error) {
 	cfg, err := config.Init(os.Stdout, 2048)
 	if err != nil {
