@@ -1,0 +1,23 @@
+# nfpm example config file
+#
+# check https://nfpm.goreleaser.com/configuration for detailed usage
+#
+name: "apt-ipfs"
+arch: "amd64"
+platform: "linux"
+version: "v0.0.1"
+section: "default"
+priority: "extra"
+maintainer: "wurongjie <wurongjie1@gmail.com>"
+description: |
+  基于 ipfs 对 apt 进行加速
+homepage: "https://github.com/myml/apt-ipfs"
+license: "MIT"
+files:
+  ./apt-ipfs: "/usr/local/bin/apt-ipfs"
+  ./systemd/apt-ipfs.service: "/lib/systemd/system/apt-ipfs.service"
+overrides:
+  deb:
+    scripts:
+      postinstall: ./systemd/postinstall.sh
+      preremove: ./systemd/preremove.sh

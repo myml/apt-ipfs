@@ -5,7 +5,7 @@ WORKDIR /src
 COPY go.* /src/
 RUN go mod download
 COPY . /src
-RUN go build
+RUN go build -ldflags="-s -w"
 
 FROM debian:stable-slim
 COPY --from=builder /src/apt-ipfs /

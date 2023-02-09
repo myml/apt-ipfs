@@ -1,0 +1,9 @@
+[Unit]
+Description=apt on ipfs
+After=network.target
+
+[Service]
+ExecStart=apt-ipfs -l :12380 -p /var/lib/apt-ipfs/
+
+[Install]
+WantedBy=default.target

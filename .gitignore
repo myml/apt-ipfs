@@ -2,3 +2,4 @@ ipfs
 data
 apt-ipfs
 .vscode
+dist/
