@@ -18,6 +18,7 @@ import (
 	"github.com/ipfs/kubo/core/coreapi"
 	"github.com/ipfs/kubo/core/corehttp"
 	"github.com/ipfs/kubo/repo/fsrepo"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/ipfs/kubo/plugin/loader"
 
@@ -25,14 +26,10 @@ import (
 )
 
 var (
-	Listen    = ":8080"
-	RepoPath  = "./data"
-	SwarmKey  = "/key/swarm/psk/1.0.0/\n/base16/\n2508242b6ac9e665ea98eb134dd7e05497530f36876ae3ebc865f45fb104291b"
-	Bootstrap = []string{
-		"/dns4/bootstrap.getdeepin.org/tcp/4001/p2p/12D3KooWBc44S9zeb1KSdRZMCHTNpuNX3uS8SpvpbQz2SzrNsWJm",
-		"/dns6/bootstrap.getdeepin.org/tcp/4001/p2p/12D3KooWBc44S9zeb1KSdRZMCHTNpuNX3uS8SpvpbQz2SzrNsWJm",
-		"/dns4/mirrors.getdeepin.org/tcp/8443/wss/p2p/12D3KooWCMcqaZQyBtRDRdVm3UsipwjG5nKR2TSk96CqRb7rNxtq",
-		"/dns6/mirrors.getdeepin.org/tcp/8443/wss/p2p/12D3KooWCMcqaZQyBtRDRdVm3UsipwjG5nKR2TSk96CqRb7rNxtq",
+	Listen   = ":8080"
+	RepoPath = "./data"
+	Peers    = []string{
+		"/dns4/ipfs.myml.dev/tcp/8443/wss/p2p/12D3KooWQYZMiH1vGpNKXh6jp8XnZ5mKEmFa3G4H5y7JN7KPV7ZF",
 	}
 )
 
@@ -122,14 +119,21 @@ func initConfig() (*config.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg.Bootstrap = Bootstrap
+	cfg.AutoNAT.ServiceMode = config.AutoNATServiceDisabled
+	cfg.Routing.Type = config.NewOptionalString("dhtclient")
+	cfg.Swarm.ConnMgr.GracePeriod = config.NewOptionalDuration(time.Minute)
+	cfg.Swarm.ConnMgr.HighWater = config.NewOptionalInteger(40)
+	cfg.Swarm.ConnMgr.LowWater = config.NewOptionalInteger(20)
+	for i := range Peers {
+		info, err := peer.AddrInfoFromString(Peers[i])
+		if err != nil {
+			return nil, err
+		}
+		cfg.Peering.Peers = append(cfg.Peering.Peers, *info)
+	}
 	err = fsrepo.Init(RepoPath, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("init config: %w", err)
-	}
-	err = os.WriteFile(filepath.Join(RepoPath, "swarm.key"), []byte(SwarmKey), 0644)
-	if err != nil {
-		return nil, fmt.Errorf("init swarm key: %w", err)
 	}
 	return cfg, err
 }

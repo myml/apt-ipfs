@@ -10,13 +10,12 @@ ipfs 是一个分布式文件系统，底层提供 p2p 共享能力，类似平�
 
 我的 ipfs 节点 ID*已内置配置到工具中*
 
-- 12D3KooWBc44S9zeb1KSdRZMCHTNpuNX3uS8SpvpbQz2SzrNsWJm
-- 12D3KooWCMcqaZQyBtRDRdVm3UsipwjG5nKR2TSk96CqRb7rNxtq
+- 12D3KooWQYZMiH1vGpNKXh6jp8XnZ5mKEmFa3G4H5y7JN7KPV7ZF
 
 deepin 仓库 CID，由于 ipfs 是基于资源内容哈希值寻址，仓库的任何变动都会生成新的 CID，建议使用域名（dnslink）作为访问入口
 
 - dnslink: /ipns/mirrors.getdeepin.org/deepin
-- 2023-12-19 版本仓库：/ipfs/QmbJCS5f269VDzZLkxVoeQX9FmwhUYYYLnK1ryctfqjRBm/deepin
+- 2023-2-11 版本仓库：/ipfs/QmUE3METyy3k6oYofFtReaRcXp4hLfPty2AdrMWkmqgoiF/deepin
 
 ## 安装
 
