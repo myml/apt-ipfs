@@ -5,10 +5,10 @@
 name: "apt-ipfs"
 arch: "amd64"
 platform: "linux"
-version: "v0.0.1"
+version: "v0.0.2"
 section: "default"
 priority: "extra"
-maintainer: "wurongjie <wurongjie1@gmail.com>"
+maintainer: "wurongjie <wurongjie@deepin.org>"
 description: |
   基于 ipfs 对 apt 进行加速
 homepage: "https://github.com/myml/apt-ipfs"
