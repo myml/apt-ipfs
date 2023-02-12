@@ -21,7 +21,7 @@ jobs:
           go install github.com/goreleaser/nfpm/cmd/nfpm@latest
       - name: Build
         run: |
-          go build -ldflags="-s -w"
+          CGO_ENABLED=0 go build -ldflags="-s -w"
           upx apt-ipfs
           /home/runner/go/bin/nfpm package --packager deb
       - uses: actions/upload-artifact@v3
