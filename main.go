@@ -10,9 +10,12 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/ipfs/go-cid"
+	pin "github.com/ipfs/go-ipfs-pinner"
 	"github.com/ipfs/kubo/config"
 	"github.com/ipfs/kubo/core"
 	"github.com/ipfs/kubo/core/coreapi"
@@ -28,9 +31,9 @@ import (
 var (
 	Listen   = ":8080"
 	RepoPath = "./data"
-	Peers    = []string{
-		"/dns4/ipfs.myml.dev/tcp/8443/wss/p2p/12D3KooWQYZMiH1vGpNKXh6jp8XnZ5mKEmFa3G4H5y7JN7KPV7ZF",
-	}
+	Mirrors  = "/ipns/mirrors.getdeepin.org"
+	HotData  = "/ipns/mirrors.getdeepin.org/.hotdata"
+	Peers    = "_peers.getdeepin.org"
 )
 
 func main() {
@@ -46,7 +49,7 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println("inited")
-
+	go pinHotData(ctx, node)
 	var l net.Listener
 	list, err := activation.Listeners()
 	if err != nil {
@@ -70,6 +73,59 @@ func main() {
 	}
 	log.Println("exiting")
 	time.Sleep(time.Second)
+}
+
+// 定时缓存热点数据
+func pinHotData(ctx context.Context, node *core.IpfsNode) {
+	isFirstTime := true
+	for {
+		if !isFirstTime {
+			time.Sleep(time.Minute)
+		} else {
+			isFirstTime = false
+		}
+		cid, err := resolveIPNS(ctx, node, HotData)
+		if err != nil {
+			log.Println("resolve hotdata:", err)
+			continue
+		}
+		_, isPinned, err := node.Pinning.IsPinned(ctx, *cid)
+		if err != nil {
+			log.Println("is pinned:", err)
+			continue
+		}
+		if !isPinned {
+			cids, err := node.Pinning.DirectKeys(ctx)
+			if err != nil {
+				log.Println("find pind:", err)
+				continue
+			}
+			for i := range cids {
+				err = node.Pinning.Unpin(ctx, cids[i], true)
+				log.Println("unpin:", err)
+				continue
+			}
+			log.Println("pin", cid)
+			node.Pinning.PinWithMode(*cid, pin.Direct)
+		}
+	}
+}
+
+// 根据ipns获取cid
+func resolveIPNS(ctx context.Context, node *core.IpfsNode, ipns string) (*cid.Cid, error) {
+	core, err := coreapi.NewCoreAPI(node)
+	if err != nil {
+		return nil, fmt.Errorf("core api:%w", err)
+	}
+	p, err := core.Name().Resolve(ctx, ipns)
+	if err != nil {
+		return nil, fmt.Errorf("resolve path: %w", err)
+	}
+	info, err := core.Object().Stat(ctx, p)
+	if err != nil {
+		return nil, fmt.Errorf("parse cid: %w", err)
+	}
+	return &info.Cid, nil
 }
 
 // 初始化节点
@@ -99,21 +155,28 @@ func initNode(ctx context.Context) (*core.IpfsNode, error) {
 	if err != nil {
 		return nil, fmt.Errorf("new node: %w", err)
 	}
-	core, err := coreapi.NewCoreAPI(node)
+	result, err := node.DNSResolver.LookupTXT(ctx, Peers)
 	if err != nil {
-		return nil, fmt.Errorf("core api:%w", err)
+		return nil, fmt.Errorf("lookup peers: %w", err)
 	}
-
-	mirrors := "/ipns/mirrors.getdeepin.org"
-	p, err := core.Name().Resolve(ctx, mirrors)
+	for i := range result {
+		for _, item := range strings.Split(result[i], ";") {
+			peer, err := peer.AddrInfoFromString(item)
+			if err != nil {
+				return nil, err
+			}
+			node.Peering.AddPeer(*peer)
+		}
+	}
+	cid, err := resolveIPNS(ctx, node, Mirrors)
 	if err != nil {
-		return nil, fmt.Errorf("resolve path: %w", err)
+		return nil, fmt.Errorf("resolve mirrors: %w", err)
 	}
-	log.Printf("resolve %s => %s\n", mirrors, p.String())
+	log.Printf("resolve %s => %s\n", Mirrors, cid.String())
 	return node, nil
 }
 
-// 生成配置
+// 生成节点配置
 func initConfig() (*config.Config, error) {
 	cfg, err := config.Init(os.Stdout, 2048)
 	if err != nil {
@@ -124,13 +187,6 @@ func initConfig() (*config.Config, error) {
 	cfg.Swarm.ConnMgr.GracePeriod = config.NewOptionalDuration(time.Minute)
 	cfg.Swarm.ConnMgr.HighWater = config.NewOptionalInteger(40)
 	cfg.Swarm.ConnMgr.LowWater = config.NewOptionalInteger(20)
-	for i := range Peers {
-		info, err := peer.AddrInfoFromString(Peers[i])
-		if err != nil {
-			return nil, err
-		}
-		cfg.Peering.Peers = append(cfg.Peering.Peers, *info)
-	}
 	err = fsrepo.Init(RepoPath, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("init config: %w", err)
