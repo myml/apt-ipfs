@@ -1,0 +1,2 @@
+#!/bin/sh
+apt-get -o Dir::Etc::SourceList=/var/lib/apt-ipfs/sources.list $@

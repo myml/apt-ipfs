@@ -1,0 +1,2 @@
+deb http://localhost:12380/ipns/mirrors.getdeepin.org/deepin/ apricot main contrib non-free
+deb-src http://localhost:12380/ipns/mirrors.getdeepin.org/deepin/ apricot main contrib non-free

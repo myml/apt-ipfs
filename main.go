@@ -187,6 +187,16 @@ func initConfig() (*config.Config, error) {
 	cfg.Swarm.ConnMgr.GracePeriod = config.NewOptionalDuration(time.Minute)
 	cfg.Swarm.ConnMgr.HighWater = config.NewOptionalInteger(40)
 	cfg.Swarm.ConnMgr.LowWater = config.NewOptionalInteger(20)
+	cfg.Addresses.Swarm = []string{
+		"/ip4/0.0.0.0/tcp/14001",
+		"/ip6/::/tcp/14001",
+		"/ip4/0.0.0.0/udp/14001/quic",
+		"/ip4/0.0.0.0/udp/14001/quic-v1",
+		"/ip4/0.0.0.0/udp/14001/quic-v1/webtransport",
+		"/ip6/::/udp/14001/quic",
+		"/ip6/::/udp/14001/quic-v1",
+		"/ip6/::/udp/14001/quic-v1/webtransport",
+	}
 	err = fsrepo.Init(RepoPath, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("init config: %w", err)

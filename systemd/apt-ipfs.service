@@ -1,9 +1,10 @@
 [Unit]
 Description=apt on ipfs
-After=network.target
+After=network-online.target
 
 [Service]
 ExecStart=apt-ipfs -l :12380 -p /var/lib/apt-ipfs/
+Restart=always
 
 [Install]
 WantedBy=default.target

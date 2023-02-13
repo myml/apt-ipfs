@@ -5,7 +5,7 @@
 name: "apt-ipfs"
 arch: "amd64"
 platform: "linux"
-version: "v0.0.3"
+version: "v0.0.4"
 section: "default"
 priority: "extra"
 maintainer: "wurongjie <wurongjie@deepin.org>"
@@ -15,9 +15,11 @@ homepage: "https://github.com/myml/apt-ipfs"
 license: "MIT"
 files:
   ./apt-ipfs: "/usr/local/bin/apt-ipfs"
+  ./scripts/apt-ipfs-get: "/usr/local/bin/apt-ipfs-get"
   ./systemd/apt-ipfs.service: "/lib/systemd/system/apt-ipfs.service"
+  ./scripts/sources.list: "/var/lib/apt-ipfs/sources.list"
 overrides:
   deb:
     scripts:
-      postinstall: ./systemd/postinstall.sh
-      preremove: ./systemd/preremove.sh
+      postinstall: ./scripts/postinstall.sh
+      preremove: ./scripts/preremove.sh
