@@ -17,13 +17,18 @@ deepin 仓库 CID，由于 ipfs 是基于资源内容哈希值寻址，仓库的
 - dnslink: /ipns/mirrors.getdeepin.org/deepin
 - 2023-2-11 版本仓库：/ipfs/QmUE3METyy3k6oYofFtReaRcXp4hLfPty2AdrMWkmqgoiF/deepin
 
-## 安装
+## 安装使用
 
-### 使用 DEB 包安装
+### 基于 DEB
 
-到 [Release](https://github.com/myml/apt-ipfs/releases) 页面下载 deb 包安装使用
+到 [Release](https://github.com/myml/apt-ipfs/releases) 页面下载 deb 包并安装
 
-### 使用 Docker 安装
+安装后，使用 apt-ipfs-get 替换 apt-get 即可，也可以改系统源后，直接使用 apt-get。
+
+如
+`sudo apt-ipfs-get update && sudo apt-ipfs-get dist-upgrade`
+
+### 基于 Docker
 
 因为p2p需要节点互连，建议使用主机网络而不是发布端口
 
@@ -31,21 +36,12 @@ deepin 仓库 CID，由于 ipfs 是基于资源内容哈希值寻址，仓库的
 docker run -d --name apt-ipfs --network host --restart always -v apt-ipfs-data:/data ghcr.io/myml/apt-ipfs:main /apt-ipfs -l 127.0.0.1:12380
 ```
 
-### 从源码安装
-
-```sh
-go install github.com/myml/apt-ipfs@latest
-```
-
-## 使用
-
-### 改源
+#### 改源
 
 ```sh
 deb http://127.0.0.1:12380/ipns/mirrors.getdeepin.org/deepin/ apricot main contrib non-free
 deb-src http://127.0.0.1:12380/ipns/mirrors.getdeepin.org/deepin/ apricot main contrib non-free
 ```
 
-### 测试
-
-`sudo apt update && apt download wget`
+改源后可直接使用 apt-get 命令
+`sudo apt-get update && apt-get download wget`
