@@ -31,9 +31,18 @@ import (
 var (
 	Listen   = ":8080"
 	RepoPath = "./data"
-	Mirrors  = "/ipns/mirrors.getdeepin.org"
-	HotData  = "/ipns/mirrors.getdeepin.org/.hotdata"
-	Peers    = "_peers.getdeepin.org"
+
+	Mirrors = "/ipns/mirrors.getdeepin.org"
+	HotData = "/ipns/mirrors.getdeepin.org/.hotdata"
+
+	Peers     = "_mirrors.getdeepin.org"
+	SwarmKey  = "/key/swarm/psk/1.0.0/\n/base16/\n2508242b6ac9e665ea98eb134dd7e05497530f36876ae3ebc865f45fb104291b"
+	Bootstrap = []string{
+		"/dns4/bootstrap.getdeepin.org/tcp/4001/p2p/12D3KooWBc44S9zeb1KSdRZMCHTNpuNX3uS8SpvpbQz2SzrNsWJm",
+		"/dns4/bootstrap.getdeepin.org/udp/4001/p2p/12D3KooWBc44S9zeb1KSdRZMCHTNpuNX3uS8SpvpbQz2SzrNsWJm",
+		"/dns6/bootstrap.getdeepin.org/tcp/4001/p2p/12D3KooWBc44S9zeb1KSdRZMCHTNpuNX3uS8SpvpbQz2SzrNsWJm",
+		"/dns6/bootstrap.getdeepin.org/udp/4001/p2p/12D3KooWBc44S9zeb1KSdRZMCHTNpuNX3uS8SpvpbQz2SzrNsWJm",
+	}
 )
 
 func main() {
@@ -79,10 +88,10 @@ func main() {
 func pinHotData(ctx context.Context, node *core.IpfsNode) {
 	isFirstTime := true
 	for {
-		if !isFirstTime {
-			time.Sleep(time.Minute)
-		} else {
+		if isFirstTime {
 			isFirstTime = false
+		} else {
+			time.Sleep(time.Minute)
 		}
 		cid, err := resolveIPNS(ctx, node, HotData)
 		if err != nil {
@@ -161,6 +170,7 @@ func initNode(ctx context.Context) (*core.IpfsNode, error) {
 	}
 	for i := range result {
 		for _, item := range strings.Split(result[i], ";") {
+			log.Println("add mirror peers", item)
 			peer, err := peer.AddrInfoFromString(item)
 			if err != nil {
 				return nil, err
@@ -187,19 +197,14 @@ func initConfig() (*config.Config, error) {
 	cfg.Swarm.ConnMgr.GracePeriod = config.NewOptionalDuration(time.Minute)
 	cfg.Swarm.ConnMgr.HighWater = config.NewOptionalInteger(40)
 	cfg.Swarm.ConnMgr.LowWater = config.NewOptionalInteger(20)
-	cfg.Addresses.Swarm = []string{
-		"/ip4/0.0.0.0/tcp/14001",
-		"/ip6/::/tcp/14001",
-		"/ip4/0.0.0.0/udp/14001/quic",
-		"/ip4/0.0.0.0/udp/14001/quic-v1",
-		"/ip4/0.0.0.0/udp/14001/quic-v1/webtransport",
-		"/ip6/::/udp/14001/quic",
-		"/ip6/::/udp/14001/quic-v1",
-		"/ip6/::/udp/14001/quic-v1/webtransport",
-	}
+	cfg.Bootstrap = Bootstrap
 	err = fsrepo.Init(RepoPath, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("init config: %w", err)
+	}
+	err = os.WriteFile(filepath.Join(RepoPath, "swarm.key"), []byte(SwarmKey), 0644)
+	if err != nil {
+		return nil, fmt.Errorf("init swarm key: %w", err)
 	}
 	return cfg, err
 }
