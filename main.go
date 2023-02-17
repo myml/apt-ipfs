@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
@@ -103,7 +104,8 @@ func pinHotData(ctx context.Context, node *core.IpfsNode) {
 			log.Println("get current peers:", err)
 			continue
 		}
-		log.Println("peers count", len(peers))
+		stats := node.Reporter.GetBandwidthTotals()
+		log.Printf("Peers count: %v\tTotal Up: %v\tTotal Down: %v\n", len(peers), humanize.Bytes(uint64(stats.TotalOut)), humanize.Bytes(uint64(stats.TotalIn)))
 
 		hotCid, err := resolveIPNS(ctx, node, HotData)
 		if err != nil {
@@ -111,13 +113,23 @@ func pinHotData(ctx context.Context, node *core.IpfsNode) {
 			continue
 		}
 		path := path.New(HotData)
+		exists := false
 		ch, err := api.Pin().Ls(ctx, options.Pin.Ls.Recursive())
 		for info := range ch {
-			if info.Path().Cid().Equals(*hotCid) {
-				api.Pin().Rm(ctx, info.Path())
+			if !info.Path().Cid().Equals(*hotCid) {
+				err = api.Pin().Rm(ctx, info.Path())
+				log.Println("resolve hotdata:", err)
+				if err != nil {
+					log.Println("rm pin:", err)
+					continue
+				}
+			} else {
+				exists = true
 			}
 		}
-		log.Println("pin hot data", hotCid, api.Pin().Add(ctx, path, options.Pin.Recursive(true)))
+		if !exists {
+			log.Println("pin hot data", hotCid, api.Pin().Add(ctx, path, options.Pin.Recursive(true)))
+		}
 	}
 }
 
@@ -193,6 +205,7 @@ func initConfig() (*config.Config, error) {
 	cfg.Swarm.ConnMgr.GracePeriod = config.NewOptionalDuration(time.Minute)
 	cfg.Swarm.ConnMgr.HighWater = config.NewOptionalInteger(40)
 	cfg.Swarm.ConnMgr.LowWater = config.NewOptionalInteger(20)
+	cfg.Datastore.GCPeriod = "240h"
 	cfg.Bootstrap = Bootstrap
 	err = fsrepo.Init(RepoPath, cfg)
 	if err != nil {
