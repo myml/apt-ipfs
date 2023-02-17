@@ -93,6 +93,7 @@ func pinHotData(ctx context.Context, node *core.IpfsNode) {
 		} else {
 			time.Sleep(time.Minute)
 		}
+		log.Println("peers count", len(node.Peering.ListPeers()))
 		cid, err := resolveIPNS(ctx, node, HotData)
 		if err != nil {
 			log.Println("resolve hotdata:", err)
@@ -115,7 +116,7 @@ func pinHotData(ctx context.Context, node *core.IpfsNode) {
 				continue
 			}
 			log.Println("pin", cid)
-			node.Pinning.PinWithMode(*cid, pin.Direct)
+			node.Pinning.PinWithMode(*cid, pin.Recursive)
 		}
 	}
 }
@@ -178,11 +179,6 @@ func initNode(ctx context.Context) (*core.IpfsNode, error) {
 			node.Peering.AddPeer(*peer)
 		}
 	}
-	cid, err := resolveIPNS(ctx, node, Mirrors)
-	if err != nil {
-		return nil, fmt.Errorf("resolve mirrors: %w", err)
-	}
-	log.Printf("resolve %s => %s\n", Mirrors, cid.String())
 	return node, nil
 }
 
