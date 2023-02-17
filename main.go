@@ -15,7 +15,8 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
-	pin "github.com/ipfs/go-ipfs-pinner"
+	"github.com/ipfs/interface-go-ipfs-core/options"
+	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/ipfs/kubo/config"
 	"github.com/ipfs/kubo/core"
 	"github.com/ipfs/kubo/core/coreapi"
@@ -86,6 +87,10 @@ func main() {
 
 // 定时缓存热点数据
 func pinHotData(ctx context.Context, node *core.IpfsNode) {
+	api, err := coreapi.NewCoreAPI(node)
+	if err != nil {
+		log.Fatal(err)
+	}
 	isFirstTime := true
 	for {
 		if isFirstTime {
@@ -93,31 +98,26 @@ func pinHotData(ctx context.Context, node *core.IpfsNode) {
 		} else {
 			time.Sleep(time.Minute)
 		}
-		log.Println("peers count", len(node.Peering.ListPeers()))
-		cid, err := resolveIPNS(ctx, node, HotData)
+		peers, err := api.Swarm().Peers(ctx)
+		if err != nil {
+			log.Println("get current peers:", err)
+			continue
+		}
+		log.Println("peers count", len(peers))
+
+		hotCid, err := resolveIPNS(ctx, node, HotData)
 		if err != nil {
 			log.Println("resolve hotdata:", err)
 			continue
 		}
-		_, isPinned, err := node.Pinning.IsPinned(ctx, *cid)
-		if err != nil {
-			log.Println("is pinned:", err)
-			continue
-		}
-		if !isPinned {
-			cids, err := node.Pinning.DirectKeys(ctx)
-			if err != nil {
-				log.Println("find pind:", err)
-				continue
+		path := path.New(HotData)
+		ch, err := api.Pin().Ls(ctx, options.Pin.Ls.Recursive())
+		for info := range ch {
+			if info.Path().Cid().Equals(*hotCid) {
+				api.Pin().Rm(ctx, info.Path())
 			}
-			for i := range cids {
-				err = node.Pinning.Unpin(ctx, cids[i], true)
-				log.Println("unpin:", err)
-				continue
-			}
-			log.Println("pin", cid)
-			node.Pinning.PinWithMode(*cid, pin.Recursive)
 		}
+		log.Println("pin hot data", hotCid, api.Pin().Add(ctx, path, options.Pin.Recursive(true)))
 	}
 }
 
